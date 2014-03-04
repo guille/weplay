@@ -13,5 +13,8 @@
     "minimist": "0.0.8",
     "redis": "0.10.1",
     "superagent": "0.16.0"
+  },
+  "devDependencies": {
+    "phantomjs": "1.9.7-1"
   }
 }
