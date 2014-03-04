@@ -9,14 +9,18 @@ var lastURL;
 function getImageSource(imageData) {
   // revokes the url if we made it with blob constructor
   function cleanLastURL() {
-    if (lastURL) {
+    if (lastURL && global.URL) {
       URL.revokeObjectURL(lastURL);
     }
   }
 
   if (Blob) {
     var blob = new Blob([imageData], {type: 'image/png'});
-    var url = URL.createObjectURL(blob);
+    if (global.URL) {
+      var url = URL.createObjectURL(blob);
+    } else {
+      var url = null;
+    }
     cleanLastURL();
     lastURL = url;
     return url;
