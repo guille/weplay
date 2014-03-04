@@ -8,20 +8,26 @@ if (process.argv.length >= 3) {
   moves = parseInt(process.argv[2]);
 }
 
-var done = false;
+var connectedTime = 30000;
+if (process.argv.length >= 4) {
+  connectedTime = parseInt(process.argv[3]);
+}
 
-setInterval(function() {
-    if (done) {
-      console.log('Ending the bot');
-      process.exit(0);
-    } else {
-      console.log('still waiting to send em all');
-    }
-  }, 5000);
+console.log('doing ' + moves + ' moves, connecting for ' + connectedTime + ' ms.');
+
+var totalFrameBandwith = 0;
+var totalChatChars = 0;
 
 socket.on('connect', function() {
   console.log('connected!');
   joinRoom();
+
+  setTimeout(function() {
+    console.log('Number of characters received in chat: ' + totalChatChars);
+    console.log('Size of all frames received in bytes: ' + totalFrameBandwith);
+    console.log('Exiting the bot');
+    process.exit(0);
+  }, connectedTime);
 });
 
 socket.on('joined', function() {
@@ -30,7 +36,28 @@ socket.on('joined', function() {
 });
 
 socket.on('frame', function(data) {
-  /* doing nothing currently */
+  totalFrameBandwith += data.length;
+});
+
+socket.on('message', function(msg, by) {
+  totalChatChars += msg.length;
+  totalChatChars += by.length;
+});
+
+socket.on('move', function(move, by) {
+  totalChatChars += move.length;
+  totalChatChars += by.length;
+});
+
+socket.on('join', function(nick, loc) {
+  totalChatChars += nick.length;
+  if (loc) {
+    totalChatChars += loc.length;
+  }
+});
+
+socket.on('disconnect', function(reason){
+  console.log('disconnected?!? with reason: ' + reason);
 });
 
 function joinRoom() {
@@ -41,6 +68,7 @@ function joinRoom() {
 
 function doRandomMoves() {
   // time to do some random actions
+  console.log('making moves and chatting!');
   var i = 0;
   var timer = setInterval(function() {
     var validMoves = [
@@ -56,12 +84,11 @@ function doRandomMoves() {
     var idx = Math.floor(Math.random() * validMoves.length);
     var move = validMoves[idx];
     socket.emit('move', move);
-    console.log('made this move: ' + move);
     socket.emit('message', randomString(10));
 
     if (++i >= moves) {
       clearInterval(timer);
-      done = true;
+      console.log('done with moves and chat!');
     }
   }, 510);
 }
