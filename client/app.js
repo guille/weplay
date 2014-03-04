@@ -1,4 +1,4 @@
-/*global $,io,Blob,URL*/
+/*global $,URL*/
 
 /* dependencies */
 var io = require('socket.io-client');
@@ -7,8 +7,12 @@ var blobToImage = require('./blob');
 var socket = io();
 global.socket = socket;
 socket.on('connect', function(){
-  document.body.className = 'ready';
+  $('body').addClass('ready');
+  $('.messages').empty();
   message('Connected!');
+  if (window.localStorage && localStorage.nick) {
+    join(localStorage.nick);
+  }
 });
 
 socket.on('disconnect', function(){
@@ -42,16 +46,25 @@ $('.input form').submit(function(ev){
     message(data, nick);
     socket.emit('message', data);
   } else {
-    nick = data;
-    socket.emit('join', data);
-    $('body').addClass('joined');
-    $('.input').addClass('joined');
-    input
-    .attr('placeholder', 'type in to chat')
-    .blur();
-    joined = true;
+    join(data);
   }
 });
+
+function join(data){
+  nick = data;
+  // Try-catch necessary because Safari might have locked setItem causing
+  // exception
+  try {
+    if (window.localStorage) localStorage.nick = data;
+  } catch (e) {}
+  socket.emit('join', data);
+  $('body').addClass('joined');
+  $('.input').addClass('joined');
+  input
+  .attr('placeholder', 'type in to chat')
+  .blur();
+  joined = true;
+}
 
 input.focus(function(){
   $('body').addClass('input_focus');
@@ -159,8 +172,13 @@ function scrollMessages(){
 }
 
 var image = $('<img>').appendTo('#game')[0];
+var lastImage;
 socket.on('frame', function(data){
+  if (lastImage && 'undefined' != typeof URL) {
+    URL.revokeObjectURL(lastImage);
+  }
   image.src = blobToImage(data);
+  lastImage = image.src;
 });
 
 // Highlights controls when image or button pressed
@@ -169,8 +187,7 @@ function highlightControls() {
 
   setTimeout(function() {
     $('table.screen-keys td').removeClass('highlight');
-  }, 1000);
-
+  }, 300);
 }
 
 $('img').mousedown(highlightControls);
