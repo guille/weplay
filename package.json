@@ -16,7 +16,6 @@
     "blob": "0.0.1"
   },
   "devDependencies": {
-    "phantomjs": "1.9.7-1",
     "browserify": "3.31.2",
     "browserify-middleware": "2.3.0"
   },
