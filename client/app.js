@@ -5,7 +5,6 @@ var io = require('socket.io-client');
 var blobToImage = require('./blob');
 
 var socket = io();
-global.socket = socket;
 socket.on('connect', function(){
   $('body').addClass('ready');
   $('.messages').empty();
