@@ -27,6 +27,10 @@ page.open('http://wechat.io', function(status) {
     console.log('joining as ' + botName);
     socket.emit('join', botName);
     socket.nick = botName;
+
+    socket.on('disconnect', function(reason) {
+      console.log('disconnect error: ' + reason);
+    });
   });
 
   pressRandomButtons();
