@@ -1,12 +1,16 @@
 /*global $,io,Blob,URL*/
 
+/* dependencies */
+var io = require('socket.io-client');
+var blobToImage = require('./blob');
+
 var socket = io();
 socket.on('connect', function(){
   document.body.className = 'ready';
   message('Connected!');
 });
 
-socket.on('disconnected', function(){
+socket.on('disconnect', function(){
   message('Disconnected. Reconnecting.');
 });
 
@@ -102,7 +106,7 @@ $(document).on('keydown', function(ev){
 });
 
 // Listener to fire up keyboard events on mobile devices for control overlay
-$('table.screen-keys td').click(function() {
+$('table.screen-keys td').mousedown(function() {
   var id = $(this).attr('id');
   var code = reverseMap[id];
   var e = $.Event('keydown');
@@ -138,7 +142,15 @@ function message(msg, by){
     p.addClass('server');
   }
   $('.messages').append(p);
+  trimMessages();
   scrollMessages();
+}
+
+function trimMessages(){
+  var messages = $('.messages');
+  while (messages.children().length > 300) {
+    $(messages.children()[0]).remove();
+  }
 }
 
 function scrollMessages(){
@@ -146,13 +158,8 @@ function scrollMessages(){
 }
 
 var image = $('<img>').appendTo('#game')[0];
-var last;
 socket.on('frame', function(data){
-  var blob = new Blob([data], { type: 'image/png' });
-  var url = URL.createObjectURL(blob);
-  image.src = url;
-  if (last) URL.revokeObjectURL(URL.revokeObjectURL);
-  last = url;
+  image.src = blobToImage(data);
 });
 
 // Highlights controls when image or button pressed
@@ -165,6 +172,5 @@ function highlightControls() {
 
 }
 
-$('img').click(highlightControls);
-$('table.screen-keys td').click(highlightControls);
-
+$('img').mousedown(highlightControls);
+$('table.screen-keys td').mousedown(highlightControls);
