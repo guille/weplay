@@ -3,6 +3,11 @@ var crypto = require('crypto');
 
 var socket = io('http://weplay.io');
 
+var moves = 20;
+if (process.argv.length >= 3) {
+  moves = parseInt(process.argv[2]);
+}
+
 var done = false;
 
 setInterval(function() {
@@ -17,7 +22,15 @@ setInterval(function() {
 socket.on('connect', function() {
   console.log('connected!');
   joinRoom();
+});
+
+socket.on('joined', function() {
+  console.log('joined room!');
   doRandomMoves();
+});
+
+socket.on('frame', function(data) {
+  /* doing nothing currently */
 });
 
 function joinRoom() {
@@ -46,7 +59,7 @@ function doRandomMoves() {
     console.log('made this move: ' + move);
     socket.emit('message', randomString(10));
 
-    if (++i >= 20) {
+    if (++i >= moves) {
       clearInterval(timer);
       done = true;
     }
