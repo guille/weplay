@@ -1,8 +1,9 @@
 
 var sio = require('socket.io');
-var browserify = require('browserify-middleware');
 var forwarded = require('forwarded-for');
 var debug = require('debug');
+var Moduleredis = require('redis');
+var adapter = require('socket.io-redis');
 
 process.title = 'weplay-io';
 
@@ -12,12 +13,17 @@ console.log('listening on *:' + port);
 
 var throttle = process.env.WEPLAY_IP_THROTTLE || 100;
 
+var auth_password = process.env.WEPLAY_REDIS_AUTH || '';
+var uri = process.env.WEPLAY_REDIS_URI || 'localhost:6379';
+var pieces = uri.split(':');
 // redis socket.io adapter
-var uri = process.env.WEPLAY_REDIS || 'localhost:6379';
-io.adapter(require('socket.io-redis')(uri));
+var redisFactory = Moduleredis.createClient;
+var pub = redisFactory(pieces[1], pieces[0], { auth_pass: auth_password });
+var sub = redisFactory(pieces[1], pieces[0], { detect_buffers: true, auth_pass: auth_password });
+io.adapter(adapter({ pubClient: pub, subClient: sub }));
 
 // redis queries instance
-var redis = require('./redis')();
+var redis = Moduleredis.createClient(pieces[1], pieces[0], { return_buffers: true, no_ready_check: true, auth_pass: auth_password });
 
 var keys = {
   right: 0,
